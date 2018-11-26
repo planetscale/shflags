@@ -112,13 +112,6 @@ __FLAGS_EXPR_CMD='expr --'
 __FLAGS_UNAME_S=`uname -s`
 if [ "${__FLAGS_UNAME_S}" = 'BSD' ]; then
   __FLAGS_EXPR_CMD='gexpr --'
-else
-  _flags_output_=`${__FLAGS_EXPR_CMD} 2>&1`
-  if [ $? -eq ${FLAGS_TRUE} -a "${_flags_output_}" = '--' ]; then
-    # We are likely running inside BusyBox.
-    __FLAGS_EXPR_CMD='expr'
-  fi
-  unset _flags_output_
 fi
 
 # Commands a user can override if desired.
@@ -132,23 +125,23 @@ FLAGS_GETOPT_CMD=${FLAGS_GETOPT_CMD:-getopt}
 __flags_level=0 # Default logging level.
 
 _flags_debug() {
-  [ ${__flags_level} -le ${FLAGS_LEVEL_DEBUG} ] || return
+  [ ${__flags_level} -le ${FLAGS_LEVEL_DEBUG} ] || return 0
   echo "flags:DEBUG $*" >&2
 }
 _flags_info() {
-  [ ${__flags_level} -le ${FLAGS_LEVEL_INFO} ] || return
+  [ ${__flags_level} -le ${FLAGS_LEVEL_INFO} ] || return 0
   echo "flags:INFO $*" >&2
 }
 _flags_warn() {
-  [ ${__flags_level} -le ${FLAGS_LEVEL_WARN} ] || return
+  [ ${__flags_level} -le ${FLAGS_LEVEL_WARN} ] || return 0
   echo "flags:WARN $*" >&2
 }
 _flags_error() {
-  [ ${__flags_level} -le ${FLAGS_LEVEL_ERROR} ] || return
+  [ ${__flags_level} -le ${FLAGS_LEVEL_ERROR} ] || return 0
   echo "flags:ERROR $*" >&2
 }
 _flags_fatal() {
-  [ ${__flags_level} -le ${FLAGS_LEVEL_FATAL} ] || return
+  [ ${__flags_level} -le ${FLAGS_LEVEL_FATAL} ] || return 0
   echo "flags:FATAL $*" >&2
   exit ${FLAGS_ERROR}
 }
@@ -317,8 +310,8 @@ _flags_define() {
   _flags_usName_="`_flags_underscoreName "${_flags_name_}"`"
 
   # Check whether the flag name is reserved.
-  _flags_itemInList "${_flags_usName_}" "${__FLAGS_RESERVED_LIST}"
-  if [ $? -eq ${FLAGS_TRUE} ]; then
+  _flags_itemInList "${_flags_usName_}" "${__FLAGS_RESERVED_LIST}" && rc=$? || rc=$?
+  if [ $rc -eq ${FLAGS_TRUE} ]; then
     flags_error="flag name (${_flags_name_}) is reserved"
     _flags_return_=${FLAGS_ERROR}
   fi
@@ -557,7 +550,6 @@ _flags_itemInList() {
     *) flags_return=${FLAGS_FALSE} ;;
   esac
 
-  unset _flags_str_
   return ${flags_return}
 }
 
